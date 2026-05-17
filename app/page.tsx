@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 
 interface ListItem {
   id: string;
@@ -13,6 +13,31 @@ interface ListItem {
 interface DecryptedItem extends ListItem {
   password: string;
   notes: string;
+}
+
+// 卡片渐变色方案
+const CARD_GRADIENTS = [
+  "from-indigo-900/60 to-purple-900/40 border-indigo-500/20",
+  "from-emerald-900/60 to-teal-900/40 border-emerald-500/20",
+  "from-orange-900/50 to-rose-900/40 border-orange-500/20",
+  "from-cyan-900/60 to-blue-900/40 border-cyan-500/20",
+  "from-violet-900/60 to-fuchsia-900/40 border-violet-500/20",
+  "from-amber-900/50 to-yellow-900/30 border-amber-500/20",
+];
+
+const CARD_ICON_COLORS = [
+  "from-blue-500 to-purple-500",
+  "from-emerald-500 to-teal-500",
+  "from-orange-500 to-pink-500",
+  "from-cyan-500 to-blue-500",
+  "from-violet-500 to-fuchsia-500",
+  "from-amber-500 to-orange-500",
+];
+
+function maskText(text: string): string {
+  if (text.length <= 3) return "***";
+  if (text.length <= 6) return text.slice(0, 1) + "***" + text.slice(-1);
+  return text.slice(0, 2) + "***" + text.slice(-2);
 }
 
 export default function HomePage() {
@@ -30,6 +55,7 @@ export default function HomePage() {
   const [verifyPasswordInput, setVerifyPasswordInput] = useState("");
   const [pendingItemId, setPendingItemId] = useState<string | null>(null);
   const [bgUrl, setBgUrl] = useState("");
+  const [copyTip, setCopyTip] = useState("");
 
   // 新增表单
   const [newWebsite, setNewWebsite] = useState("");
@@ -37,9 +63,6 @@ export default function HomePage() {
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newNotes, setNewNotes] = useState("");
-
-  // 复制提示
-  const [copyTip, setCopyTip] = useState("");
 
   function apiHeaders(): Record<string, string> {
     return { "Content-Type": "application/json", Authorization: "Bearer " + token };
@@ -54,10 +77,8 @@ export default function HomePage() {
 
   useEffect(() => {
     if (unlocked) loadItems();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unlocked]);
 
-  // 获取背景图 URL
   useEffect(() => {
     fetch("/api/config")
       .then((r) => r.json())
@@ -92,9 +113,6 @@ export default function HomePage() {
     const num = parseInt(value);
     if (!isNaN(num) && num > 0 && num <= items.length) {
       requestDecrypt(items[num - 1].id);
-    } else if (value.length === 0) {
-      setDecryptedItem(null);
-      setSelectedId(null);
     }
   }
 
@@ -149,11 +167,8 @@ export default function HomePage() {
       });
       if (res.ok) {
         setShowAdd(false);
-        setNewWebsite("");
-        setNewUrl("");
-        setNewUsername("");
-        setNewPassword("");
-        setNewNotes("");
+        setNewWebsite(""); setNewUrl(""); setNewUsername("");
+        setNewPassword(""); setNewNotes("");
         await loadItems();
       }
     } catch (e) {
@@ -188,9 +203,8 @@ export default function HomePage() {
 
   const filteredItems =
     searchInput && isNaN(parseInt(searchInput))
-      ? items.filter(
-          (item) =>
-            item.website.toLowerCase().includes(searchInput.toLowerCase())
+      ? items.filter((item) =>
+          item.website.toLowerCase().includes(searchInput.toLowerCase())
         )
       : items;
 
@@ -201,17 +215,13 @@ export default function HomePage() {
         className="fixed inset-0 flex items-center justify-center px-4"
         style={
           bgUrl
-            ? {
-                backgroundImage: "url(" + bgUrl + ")",
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }
-            : undefined
+            ? { backgroundImage: "url(" + bgUrl + ")", backgroundSize: "cover", backgroundPosition: "center" }
+            : { background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)" }
         }
       >
-        <div className="w-full max-w-sm p-8 rounded-2xl shadow-2xl backdrop-blur-xl" style={{ backgroundColor: "rgba(15,23,42,0.85)" }}>
+        <div className="w-full max-w-sm p-8 rounded-2xl shadow-2xl backdrop-blur-xl border border-white/10" style={{ backgroundColor: "rgba(15,23,42,0.85)" }}>
           <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 mb-4 shadow-lg">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 mb-4 shadow-lg shadow-blue-600/30">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                 <path d="M7 11V7a5 5 0 0110 0v4" />
@@ -226,7 +236,7 @@ export default function HomePage() {
             onChange={(e) => setPassword(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleUnlock()}
             placeholder="输入访问密码解锁"
-            className="w-full px-4 py-3.5 rounded-xl bg-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 border border-white/10 backdrop-blur-sm text-base"
+            className="w-full px-4 py-3.5 rounded-xl bg-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 border border-white/10 text-base"
             autoFocus
           />
           {error && <p className="text-red-400 text-sm mt-2 text-center">{error}</p>}
@@ -247,25 +257,16 @@ export default function HomePage() {
       className="min-h-screen relative overflow-hidden"
       style={
         bgUrl
-          ? {
-              backgroundImage: "url(" + bgUrl + ")",
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              backgroundAttachment: "fixed",
-            }
-          : undefined
+          ? { backgroundImage: "url(" + bgUrl + ")", backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed" }
+          : { background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #111827 100%)" }
       }
     >
-      {/* 背景遮罩 - 功能区外透明 */}
-      {bgUrl && (
-        <div className="absolute inset-0 bg-black/20 pointer-events-none" />
-      )}
+      {bgUrl && <div className="absolute inset-0 bg-black/30 pointer-events-none" />}
 
-      {/* 主内容区 */}
-      <div className="relative z-10 max-w-lg mx-auto px-4 py-6 min-h-screen">
+      <div className="relative z-10 max-w-3xl mx-auto px-4 py-4 min-h-screen">
 
         {/* 顶部栏 */}
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-md">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -276,7 +277,7 @@ export default function HomePage() {
             <h1 className="text-xl font-bold text-white drop-shadow">PassMan</h1>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-300 mr-1">{items.length} 条</span>
+            <span className="text-xs text-slate-400 bg-white/5 px-2.5 py-1 rounded-full">{items.length} 条</span>
             <button
               onClick={() => setShowAdd(true)}
               className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-xl text-sm font-medium transition-all shadow-lg shadow-emerald-600/25 text-white"
@@ -294,26 +295,26 @@ export default function HomePage() {
               type="text"
               value={searchInput}
               onChange={(e) => handleSearch(e.target.value)}
-              placeholder="输入编号或搜索网站..."
-              className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-slate-900/80 backdrop-blur-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 border border-white/10 text-base"
+              placeholder="输入编号或搜索网站名称..."
+              className="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-900/60 backdrop-blur-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 border border-white/10 text-sm"
             />
           </div>
         </div>
 
-        {/* 解密详情卡片 */}
+        {/* 解密详情卡片（展开在顶部） */}
         {decryptedItem && (
-          <div className="mb-4 p-5 rounded-2xl backdrop-blur-xl shadow-2xl border border-white/10" style={{ backgroundColor: "rgba(15,23,42,0.88)" }}>
+          <div className="mb-4 p-5 rounded-2xl backdrop-blur-xl shadow-2xl border border-white/10 animate-in fade-in slide-in-from-top-2 duration-300" style={{ backgroundColor: "rgba(15,23,42,0.9)" }}>
             <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/30 to-purple-600/30 flex items-center justify-center text-lg">
-                  🔐
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/40 to-purple-600/40 flex items-center justify-center text-lg font-bold text-white shadow-inner">
+                  {decryptedItem.website.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg text-white">{decryptedItem.website}</h3>
+                  <h3 className="font-bold text-white">{decryptedItem.website}</h3>
                   {decryptedItem.url && (
                     <a href={decryptedItem.url.startsWith("http") ? decryptedItem.url : "https://" + decryptedItem.url}
                        target="_blank" rel="noopener noreferrer"
-                       className="text-xs text-blue-400 hover:text-blue-300 truncate block max-w-[240px]">
+                       className="text-xs text-blue-400 hover:text-blue-300 truncate block max-w-[200px]">
                       {decryptedItem.url}
                     </a>
                   )}
@@ -321,32 +322,24 @@ export default function HomePage() {
               </div>
               <button
                 onClick={() => { setDecryptedItem(null); setSelectedId(null); }}
-                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-400 hover:text-white transition"
-              >
-                ✕
-              </button>
+                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-400 hover:text-white transition text-sm"
+              >✕</button>
             </div>
-
-            <div className="space-y-2.5 mt-4">
-              {/* 账号行 */}
-              <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 group cursor-pointer" onClick={() => copyToClipboard(decryptedItem.username, "账号")}>
-                <span className="text-slate-400 text-sm">账号</span>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 group cursor-pointer hover:bg-white/10 transition" onClick={() => copyToClipboard(decryptedItem.username, "账号")}>
+                <span className="text-slate-400 text-xs">账号</span>
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-sm text-white">{decryptedItem.username}</span>
-                  <span className="opacity-0 group-hover:opacity-100 text-xs text-blue-400 transition">复制</span>
+                  <span className="opacity-0 group-hover:opacity-100 text-xs text-blue-400 hidden sm:inline">复制</span>
                 </div>
               </div>
-
-              {/* 密码行 */}
-              <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 group cursor-pointer" onClick={() => copyToClipboard(decryptedItem.password, "密码")}>
-                <span className="text-slate-400 text-sm">密码</span>
+              <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 group cursor-pointer hover:bg-white/10 transition" onClick={() => copyToClipboard(decryptedItem.password, "密码")}>
+                <span className="text-slate-400 text-xs">密码</span>
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-sm text-green-400 tracking-wider">{decryptedItem.password}</span>
-                  <span className="opacity-0 group-hover:opacity-100 text-xs text-blue-400 transition">复制</span>
+                  <span className="opacity-0 group-hover:opacity-100 text-xs text-blue-400 hidden sm:inline">复制</span>
                 </div>
               </div>
-
-              {/* 备注 */}
               {decryptedItem.notes && (
                 <div className="p-3 rounded-xl bg-white/5">
                   <span className="text-slate-400 text-xs block mb-1">备注</span>
@@ -354,54 +347,80 @@ export default function HomePage() {
                 </div>
               )}
             </div>
-
             <button
               onClick={() => handleDelete(decryptedItem.id)}
-              className="mt-4 w-full py-2.5 bg-red-500/15 hover:bg-red-500/25 text-red-400 rounded-xl text-sm font-medium transition border border-red-500/20"
+              className="mt-3 w-full py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl text-sm font-medium transition border border-red-500/15"
             >
               🗑 删除此条记录
             </button>
           </div>
         )}
 
-        {/* 密码列表 - 只显示网站名和编号，不显示账号 */}
-        <div className="space-y-2 pb-20">
-          {filteredItems.map((item, index) => (
-            <button
-              key={item.id}
-              onClick={() => requestDecrypt(item.id)}
-              className={
-                "w-full text-left px-4 py-3.5 rounded-xl transition-all flex items-center justify-between backdrop-blur-md border " +
-                (selectedId === item.id
-                  ? "bg-blue-600/25 border-blue-500/40 shadow-lg shadow-blue-600/10"
-                  : "bg-slate-900/60 hover:bg-slate-800/70 border-white/5")
-              }
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <span className="text-sm font-mono font-bold text-blue-400/70 w-7 shrink-0">
-                  #{index + 1}
-                </span>
-                <div className="min-w-0">
-                  <p className="font-medium text-white truncate">{item.website}</p>
-                </div>
-              </div>
-              <svg className="w-4 h-4 text-slate-500 shrink-0 ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-            </button>
-          ))}
-          {filteredItems.length === 0 && (
-            <div className="text-center py-12">
-              <div className="text-4xl mb-3">🔒</div>
-              <p className="text-slate-400 text-sm">
-                {items.length === 0 ? "暂无保存的密码\n点击右上角「+ 添加」开始" : "无匹配结果"}
-              </p>
+        {/* ====== 卡片网格 ====== */}
+        {filteredItems.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-24">
+            {filteredItems.map((item, index) => {
+              const gradient = CARD_GRADIENTS[index % CARD_GRADIENTS.length];
+              const iconColor = CARD_ICON_COLORS[index % CARD_ICON_COLORS.length];
+              const isSelected = selectedId === item.id;
+
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => requestDecrypt(item.id)}
+                  className={
+                    "text-left p-4 rounded-2xl bg-gradient-to-br backdrop-blur-xl border transition-all duration-200 hover:scale-[1.02] hover:shadow-xl group " +
+                    gradient +
+                    (isSelected
+                      ? " ring-2 ring-blue-500/60 scale-[1.02] shadow-lg shadow-blue-600/20"
+                      : " shadow-md")
+                  }
+                >
+                  <div className="flex items-center gap-3">
+                    {/* 网站首字母图标 */}
+                    <div className={"w-11 h-11 rounded-xl bg-gradient-to-br flex items-center justify-center text-base font-bold text-white shadow-inner shrink-0 " + iconColor}>
+                      {item.website.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-white truncate text-[15px] leading-tight">{item.website}</p>
+                      <p className="text-xs text-slate-500 mt-0.5 truncate">{maskText(item.username)}</p>
+                    </div>
+                    {/* 操作图标 - 点击查看 */}
+                    <div className="shrink-0 w-8 h-8 rounded-full bg-white/5 flex items-center justify-center opacity-50 group-hover:opacity-100 group-hover:bg-white/10 transition-all">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-white/5">
+                    <span className="text-xs text-slate-600 font-mono">#{index + 1}</span>
+                    <span className="text-xs text-slate-600">
+                      {item.url ? "🔗 " + new URL(item.url.startsWith("http") ? item.url : "https://" + item.url).hostname.replace("www.", "") : "—"}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-16">
+            <div className="w-20 h-20 mx-auto rounded-2xl bg-white/5 flex items-center justify-center mb-4">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-slate-600">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0110 0v4" />
+              </svg>
             </div>
-          )}
-        </div>
+            <p className="text-slate-500 text-sm">
+              {items.length === 0 ? "还没有保存任何密码\n点击右上角「+ 添加」开始" : searchInput ? "无匹配结果" : "加载中..."}
+            </p>
+          </div>
+        )}
 
         {/* ====== 二次密码验证弹窗 ====== */}
         {showVerify && (
           <div className="fixed inset-0 z-50 flex items-center justify-center px-6" style={{ backgroundColor: "rgba(0,0,0,0.65)", backdropFilter: "blur(8px)" }}>
-            <div className="w-full max-w-sm p-6 rounded-2xl shadow-2xl" style={{ backgroundColor: "rgba(15,23,42,0.95)" }}>
+            <div className="w-full max-w-sm p-6 rounded-2xl shadow-2xl border border-white/10" style={{ backgroundColor: "rgba(15,23,42,0.95)" }}>
               <div className="text-center mb-5">
                 <div className="w-14 h-14 mx-auto rounded-2xl bg-yellow-500/20 flex items-center justify-center mb-3">
                   <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#facc15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -410,14 +429,14 @@ export default function HomePage() {
                   </svg>
                 </div>
                 <h2 className="text-lg font-bold text-white">安全验证</h2>
-                <p className="text-slate-400 text-sm mt-1">输入访问密码以查看详情</p>
+                <p className="text-slate-400 text-sm mt-1">输入解密密码以查看账号密码</p>
               </div>
               <input
                 type="password"
                 value={verifyPasswordInput}
                 onChange={(e) => setVerifyPasswordInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && doDecrypt()}
-                placeholder="输入访问密码"
+                placeholder="输入解密密码"
                 className="w-full px-4 py-3.5 rounded-xl bg-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 border border-white/10 text-base"
                 autoFocus
               />
@@ -425,16 +444,12 @@ export default function HomePage() {
                 <button
                   onClick={() => { setShowVerify(false); setPendingItemId(null); setVerifyPasswordInput(""); }}
                   className="flex-1 py-3 bg-white/10 hover:bg-white/15 rounded-xl text-sm font-medium transition text-slate-300"
-                >
-                  取消
-                </button>
+                >取消</button>
                 <button
                   onClick={doDecrypt}
                   disabled={!verifyPasswordInput}
                   className="flex-1 py-3 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-sm font-semibold transition text-white shadow-lg shadow-yellow-600/25"
-                >
-                  确认查看
-                </button>
+                >确认查看</button>
               </div>
             </div>
           </div>
@@ -443,13 +458,10 @@ export default function HomePage() {
         {/* ====== 添加弹窗 ====== */}
         {showAdd && (
           <div className="fixed inset-0 z-50 flex items-center justify-center px-6" style={{ backgroundColor: "rgba(0,0,0,0.65)", backdropFilter: "blur(8px)" }}>
-            <div className="w-full max-w-sm p-6 rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto" style={{ backgroundColor: "rgba(15,23,42,0.95)" }}>
+            <div className="w-full max-w-sm p-6 rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto border border-white/10" style={{ backgroundColor: "rgba(15,23,42,0.95)" }}>
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-lg font-bold text-white">添加新密码</h2>
-                <button
-                  onClick={() => setShowAdd(false)}
-                  className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-400 hover:text-white transition"
-                >✕</button>
+                <button onClick={() => setShowAdd(false)} className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-400 hover:text-white transition">✕</button>
               </div>
               <div className="space-y-3">
                 <div>
@@ -479,20 +491,15 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="flex gap-3 mt-5">
-                <button onClick={() => setShowAdd(false)}
-                  className="flex-1 py-3 bg-white/10 hover:bg-white/15 rounded-xl text-sm font-medium transition text-slate-300">
-                  取消
-                </button>
+                <button onClick={() => setShowAdd(false)} className="flex-1 py-3 bg-white/10 hover:bg-white/15 rounded-xl text-sm font-medium transition text-slate-300">取消</button>
                 <button onClick={handleAdd} disabled={!newWebsite || !newUsername || !newPassword}
-                  className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-sm font-semibold transition text-white shadow-lg shadow-blue-600/25">
-                  保存
-                </button>
+                  className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-sm font-semibold transition text-white shadow-lg shadow-blue-600/25">保存</button>
               </div>
             </div>
           </div>
         )}
 
-        {/* 加载指示器 */}
+        {/* 加载提示 */}
         {loading && (
           <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-xl backdrop-blur-xl text-white text-sm shadow-lg flex items-center gap-2" style={{ backgroundColor: "rgba(15,23,42,0.9)" }}>
             <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25"/><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
@@ -513,7 +520,6 @@ export default function HomePage() {
             ✓ {copyTip}
           </div>
         )}
-
       </div>
     </div>
   );

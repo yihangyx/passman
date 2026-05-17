@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/auth";
+import { verifyToken, verifyDecryptPassword } from "@/lib/auth";
 import { decrypt } from "@/lib/crypto";
 import { getItem, deleteItem } from "@/lib/kv";
 
@@ -17,9 +17,7 @@ export async function POST(
     if (!password) {
       return NextResponse.json({ error: "需要二次密码" }, { status: 400 });
     }
-    // 二次密码验证：必须与主访问密码一致
-    const { verifyPassword } = await import("@/lib/auth");
-    if (!verifyPassword(password)) {
+    if (!verifyDecryptPassword(password)) {
       return NextResponse.json({ error: "二次密码错误" }, { status: 401 });
     }
     const item = await getItem(params.id);

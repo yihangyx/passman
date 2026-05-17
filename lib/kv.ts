@@ -1,0 +1,40 @@
+import { kv } from "@vercel/kv";
+import { nanoid } from "nanoid";
+import type { StoredItem, ListItem } from "./types";
+
+const SET_KEY = "passman:entries";
+
+export function generateId(): string {
+  return nanoid(12);
+}
+
+export async function getAllItems(): Promise<ListItem[]> {
+  const entries = await kv.hgetall<Record<string, StoredItem>>(SET_KEY);
+  if (!entries) return [];
+  return Object.entries(entries)
+    .map(([id, item]) => ({
+      id,
+      website: item.website,
+      url: item.url,
+      username: item.username,
+      createdAt: item.createdAt,
+    }))
+    .sort(
+      (a, b) => Number(a.createdAt) - Number(b.createdAt)
+    );
+}
+
+export async function getItem(id: string): Promise<StoredItem | null> {
+  return await kv.hget<StoredItem>(SET_KEY, id);
+}
+
+export async function addItem(item: StoredItem): Promise<string> {
+  const id = generateId();
+  await kv.hset(SET_KEY, { [id]: item });
+  return id;
+}
+
+export async function deleteItem(id: string): Promise<boolean> {
+  const result = await kv.hdel(SET_KEY, id);
+  return result > 0;
+}

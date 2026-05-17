@@ -1,8 +1,14 @@
 import { kv } from "@vercel/kv";
 import { nanoid } from "nanoid";
+import crypto from "crypto";
 import type { StoredItem, ListItem } from "./types";
 
-const SET_KEY = "passman:entries";
+// Redis hash key 混淆：避免 Upstash 控制台直接看到明文 "passman:entries"
+// 设置环境变量 KV_KEY_SALT 后，key 名变为哈希值（新部署时启用）
+// ⚠️ 注意：已有数据的部署修改 KV_KEY_SALT 会导致无法读取旧数据，需先迁移
+const SET_KEY = process.env.KV_KEY_SALT
+  ? "pm:" + crypto.createHash("sha256").update("passman:entries:" + process.env.KV_KEY_SALT).digest("hex")
+  : "passman:entries";
 
 export function generateId(): string {
   return nanoid(12);

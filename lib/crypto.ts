@@ -5,6 +5,13 @@ const ALGORITHM = "aes-256-gcm";
 function getKey(): Buffer {
   const key = process.env.ENCRYPTION_KEY;
   if (!key) throw new Error("ENCRYPTION_KEY environment variable is not set");
+  // 强度校验：至少 32 字符
+  if (key.length < 32) {
+    console.warn(
+      "⚠️  SECURITY WARNING: ENCRYPTION_KEY 长度不足 32 字符，加密强度较弱。" +
+      "建议使用 64 位十六进制随机字符串（如 openssl rand -hex 32）"
+    );
+  }
   if (key.length === 64) return Buffer.from(key, "hex");
   return Buffer.from(key, "base64");
 }

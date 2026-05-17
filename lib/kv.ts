@@ -3,9 +3,7 @@ import { nanoid } from "nanoid";
 import crypto from "crypto";
 import type { StoredItem, ListItem } from "./types";
 
-// Redis hash key 混淆：避免 Upstash 控制台直接看到明文 "passman:entries"
-// 设置环境变量 KV_KEY_SALT 后，key 名变为哈希值（新部署时启用）
-// ⚠️ 注意：已有数据的部署修改 KV_KEY_SALT 会导致无法读取旧数据，需先迁移
+// Redis hash key 混淆
 const SET_KEY = process.env.KV_KEY_SALT
   ? "pm:" + crypto.createHash("sha256").update("passman:entries:" + process.env.KV_KEY_SALT).digest("hex")
   : "passman:entries";
@@ -14,7 +12,8 @@ export function generateId(): string {
   return nanoid(12);
 }
 
-export async function getAllItems(): Promise<ListItem[]> {
+/** 获取所有条目（含加密 notes，由调用方解密） */
+export async function getAllItems(): Promise<(ListItem & { encNotes: string })[]> {
   const entries = await kv.hgetall<Record<string, StoredItem>>(SET_KEY);
   if (!entries) return [];
   return Object.entries(entries)
@@ -23,11 +22,11 @@ export async function getAllItems(): Promise<ListItem[]> {
       website: item.website,
       url: item.url,
       username: item.username,
+      notes: item.encNotes, // 暂时存加密值，API 层解密后替换
+      encNotes: item.encNotes,
       createdAt: item.createdAt,
     }))
-    .sort(
-      (a, b) => Number(a.createdAt) - Number(b.createdAt)
-    );
+    .sort((a, b) => Number(a.createdAt) - Number(b.createdAt));
 }
 
 export async function getItem(id: string): Promise<StoredItem | null> {

@@ -1,14 +1,3 @@
-export interface PasswordEntry {
-  id: string;
-  website: string;
-  url: string;
-  username: string;
-  password: string;
-  notes: string;
-  createdAt: number;
-  updatedAt: number;
-}
-
 export interface StoredItem {
   website: string;
   url: string;
@@ -24,10 +13,10 @@ export interface ListItem {
   website: string;
   url: string;
   username: string;
+  notes: string;
   createdAt: string;
 }
 
 export interface DecryptedItem extends ListItem {
   password: string;
-  notes: string;
 }

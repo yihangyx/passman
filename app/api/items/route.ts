@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth";
-import { encrypt } from "@/lib/crypto";
-import { getAllItems, addItem, getItem } from "@/lib/kv";
-import type { StoredItem, DecryptedItem } from "@/lib/types";
+import { encrypt, decrypt } from "@/lib/crypto";
+import { getAllItems, addItem } from "@/lib/kv";
+import type { StoredItem, ListItem } from "@/lib/types";
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,7 +10,26 @@ export async function GET(req: NextRequest) {
     if (!verifyToken(auth.replace("Bearer ", ""))) {
       return NextResponse.json({ error: "未授权" }, { status: 401 });
     }
-    const items = await getAllItems();
+    const rawItems = await getAllItems();
+    // 解密 notes 供前端搜索用
+    const items: ListItem[] = rawItems.map((item) => {
+      let notes = "";
+      try {
+        if (item.encNotes) {
+          notes = decrypt(item.encNotes);
+        }
+      } catch {
+        notes = "";
+      }
+      return {
+        id: item.id,
+        website: item.website,
+        url: item.url,
+        username: item.username,
+        notes,
+        createdAt: item.createdAt,
+      };
+    });
     return NextResponse.json(items);
   } catch (e) {
     return NextResponse.json({ error: "查询失败" }, { status: 500 });

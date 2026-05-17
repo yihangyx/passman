@@ -7,6 +7,7 @@ interface ListItem {
   website: string;
   url: string;
   username: string;
+  notes: string;
   createdAt: string;
 }
 
@@ -56,6 +57,7 @@ export default function HomePage() {
   const [pendingItemId, setPendingItemId] = useState<string | null>(null);
   const [bgUrl, setBgUrl] = useState("");
   const [copyTip, setCopyTip] = useState("");
+  const [showAll, setShowAll] = useState(false);
 
   // 新增表单
   const [newWebsite, setNewWebsite] = useState("");
@@ -204,7 +206,9 @@ export default function HomePage() {
   const filteredItems =
     searchInput && isNaN(parseInt(searchInput))
       ? items.filter((item) =>
-          item.website.toLowerCase().includes(searchInput.toLowerCase())
+          item.website.toLowerCase().includes(searchInput.toLowerCase()) ||
+          item.username.toLowerCase().includes(searchInput.toLowerCase()) ||
+          (item.notes && item.notes.toLowerCase().includes(searchInput.toLowerCase()))
         )
       : items;
 
@@ -221,14 +225,11 @@ export default function HomePage() {
       >
         <div className="w-full max-w-sm p-8 rounded-2xl shadow-2xl backdrop-blur-xl border border-white/10" style={{ backgroundColor: "rgba(15,23,42,0.85)" }}>
           <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 mb-4 shadow-lg shadow-blue-600/30">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0110 0v4" />
-              </svg>
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl overflow-hidden mb-4 shadow-lg shadow-blue-600/30 ring-2 ring-white/20">
+              <img src="https://s41.ax1x.com/2026/03/16/peVHPjf.jpg" alt="logo" className="w-full h-full object-cover" />
             </div>
-            <h1 className="text-2xl font-bold text-white">PassMan</h1>
-            <p className="text-slate-400 mt-1 text-sm">安全密码管理器</p>
+            <h1 className="text-2xl font-bold text-white">@奕涵2026</h1>
+            <p className="text-slate-400 mt-1 text-sm">安全密码管理</p>
           </div>
           <input
             type="password"
@@ -268,13 +269,10 @@ export default function HomePage() {
         {/* 顶部栏 */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-md">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0110 0v4" />
-              </svg>
+            <div className="w-9 h-9 rounded-xl overflow-hidden shadow-md ring-1 ring-white/20">
+              <img src="https://s41.ax1x.com/2026/03/16/peVHPjf.jpg" alt="logo" className="w-full h-full object-cover" />
             </div>
-            <h1 className="text-xl font-bold text-white drop-shadow">PassMan</h1>
+            <h1 className="text-xl font-bold text-white drop-shadow">@奕涵2026</h1>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-400 bg-white/5 px-2.5 py-1 rounded-full">{items.length} 条</span>
@@ -295,10 +293,23 @@ export default function HomePage() {
               type="text"
               value={searchInput}
               onChange={(e) => handleSearch(e.target.value)}
-              placeholder="输入编号或搜索网站名称..."
+              placeholder="输入编号或搜索（网站/账号/备注）..."
               className="w-full pl-11 pr-4 py-3 rounded-xl bg-slate-900/60 backdrop-blur-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 border border-white/10 text-sm"
             />
           </div>
+          {/* 显示全部开关 */}
+          <label className="flex items-center gap-2 mt-2.5 cursor-pointer select-none group">
+            <input
+              type="checkbox"
+              checked={showAll}
+              onChange={(e) => setShowAll(e.target.checked)}
+              className="sr-only"
+            />
+            <div className={`w-9 h-5 rounded-full transition-all duration-200 flex items-center px-0.5 ${showAll ? "bg-blue-500" : "bg-white/15"}`}>
+              <div className={`w-4 h-4 rounded-full bg-white shadow transition-all duration-200 ${showAll ? "translate-x-4" : ""}`} />
+            </div>
+            <span className="text-xs text-slate-400 group-hover:text-slate-300 transition">显示全部密码卡片</span>
+          </label>
         </div>
 
         {/* 解密详情卡片（展开在顶部） */}
@@ -356,8 +367,8 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* ====== 搜索结果（仅搜索时显示） ====== */}
-        {searchInput.length > 0 ? (
+        {/* ====== 搜索结果（搜索或显示全部时展示） ====== */}
+        {(showAll || searchInput.length > 0) ? (
           filteredItems.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-24">
             {filteredItems.map((item, index) => {

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PassMan - 密码管理器",
-  description: "安全的密码管理工具",
+  title: "奕涵mua",
+  description: "奕涵mua - 安全密码管理",
 };
 
 export default function RootLayout({

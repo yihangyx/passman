@@ -356,9 +356,10 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* ====== 卡片网格 ====== */}
-        {filteredItems.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-24">
+        {/* ====== 搜索结果（仅搜索时显示） ====== */}
+        {searchInput.length > 0 ? (
+          filteredItems.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-24">
             {filteredItems.map((item, index) => {
               const gradient = CARD_GRADIENTS[index % CARD_GRADIENTS.length];
               const iconColor = CARD_ICON_COLORS[index % CARD_ICON_COLORS.length];
@@ -404,16 +405,18 @@ export default function HomePage() {
             })}
           </div>
         ) : (
-          <div className="text-center py-16">
-            <div className="w-20 h-20 mx-auto rounded-2xl bg-white/5 flex items-center justify-center mb-4">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-slate-600">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0110 0v4" />
+            <div className="text-center py-12">
+              <p className="text-slate-400 text-sm">无匹配结果</p>
+            </div>
+          )
+        ) : (
+          <div className="text-center py-20">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-white/5 flex items-center justify-center mb-3">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-slate-600">
+                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
               </svg>
             </div>
-            <p className="text-slate-500 text-sm">
-              {items.length === 0 ? "还没有保存任何密码\n点击右上角「+ 添加」开始" : searchInput ? "无匹配结果" : "加载中..."}
-            </p>
+            <p className="text-slate-500 text-sm">输入网站名或编号搜索密码...</p>
           </div>
         )}
 
